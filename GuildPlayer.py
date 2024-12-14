@@ -29,7 +29,7 @@ class Player():
             # "<YoutubeID>" : Aduio()
         }
 
-        
+
         self.AudioGraper = Graper()
         self.AudioGraper.AudioData = self.AudioData
 
@@ -61,35 +61,41 @@ class Player():
             
         self.Queue.append(self.AudioData[_id])
 
+
     def AddPlayList(self, YoutubePLID):
         _ids = self.AudioGraper.PlaylistHerfsRequest(YoutubePLID)
-        for _id in _ids:
+        for Index, _id in enumerate(_ids):
             self.AddToQueue(_id)
+            if Index >= 100:
+                return
+
 
     async def Update(self):
 
-        if self.IsPlaying == False:
-
+        if self.IsPlaying == False and self.Channal:
             if not self.AudioPlaying and self.Queue:
                 self.AudioPlaying = self.Queue[0]
                 self.Queue.pop(0)
 
             if self.AudioPlaying:
-                
-                if self.AudioPlaying.Status == "Preparing":
-                    return
+                try:
+                    if self.AudioPlaying.Status == "Preparing":
+                        return
 
-                if self.AudioPlaying.Status == "Ready":
-                    if self.Channal and not self.IsPlaying:
-                        await self.PlayFunction(self.AudioPlaying.Buffer, self.Channal, self.GuildID)
-                        self.IsPlaying = True
+                    if self.AudioPlaying.Status == "Ready":
+                        if self.Channal and not self.IsPlaying:
+                            await self.PlayFunction(self.AudioPlaying.Buffer, self.Channal, self.GuildID)
+                            self.IsPlaying = True
 
-                if self.AudioPlaying.Status == "NotInstalled":
-                    #self.AudioPlaying.Status = "Preparing" # change the varable just in case so we dont run through errors
-                    threading.Thread(target=self.AudioGraper.Donwload, args=(self.AudioPlaying.ID,)).start()
-            
-                if self.AudioPlaying.Status == "Error":
-                    self.AudioPlaying.Buffer = None
-                    self.AudioPlaying.Status = "NotInstalled"
-                    self.IsPlaying = False
-                    self.AudioPlaying = None
+                    if self.AudioPlaying.Status == "NotInstalled":
+                        #self.AudioPlaying.Status = "Preparing" # change the varable just in case so we dont run through errors
+                        threading.Thread(target=self.AudioGraper.Donwload, args=(self.AudioPlaying.ID,)).start()
+
+
+                    if self.AudioPlaying.Status == "Error":
+                        self.AudioPlaying.Buffer = None
+                        self.AudioPlaying.Status = "NotInstalled"
+                        self.IsPlaying = False
+                        self.AudioPlaying = None
+                except:
+                    pass

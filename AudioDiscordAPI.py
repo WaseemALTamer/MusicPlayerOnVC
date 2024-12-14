@@ -88,9 +88,6 @@ class AudioAPI():
         await interaction.response.send_message(f'Skiped')
 
 
-
-
-
     async def On_Pause(self, interaction):
         _discordServerID = interaction.user.guild.id
         self.InitNewGuild(_discordServerID)
@@ -111,7 +108,6 @@ class AudioAPI():
         await interaction.response.send_message(f'Resumed')
 
 
-
     async def On_Show_Queue(self, interaction):
         _discordServerID = interaction.user.guild.id
         self.InitNewGuild(_discordServerID)
@@ -127,11 +123,11 @@ class AudioAPI():
 
 
     async def OnDisconnect(self, interaction):
-
         Channal = interaction.guild.voice_client
         if Channal is not None:
-            self.On_Clear_Queue()
-            self.On_Skip()
+            _guildID = interaction.user.guild.id
+            self.Guilds[_guildID].Queue = []
+            Channal.stop()
             await Channal.disconnect()
         await interaction.response.send_message(f'Disconnected')
 
@@ -140,7 +136,6 @@ class AudioAPI():
     async def On_Clear_Queue(self, interaction):
         _discordServerID = interaction.user.guild.id
         self.InitNewGuild(_discordServerID)
-
         _guildID = interaction.user.guild.id
         self.Guilds[_guildID].Queue = []
         await interaction.response.send_message(f'Cleared the Queue')
@@ -154,7 +149,7 @@ class AudioAPI():
         await interaction.response.send_message(f'Shuffled the Queue')
 
 
-    async def OnPlay(self, interaction, url): # Intraction
+    async def OnPlay(self, interaction, url): # Intraction\
         _user = interaction.user
         _discordServerID = _user.guild.id
         _channel = _user.voice.channel
@@ -203,16 +198,28 @@ class AudioAPI():
 
 
     async def PlaySound(self, Buffer, Channal, GuildID):
-        AudioSource = io.BytesIO(Buffer)
-        AudioSource = discord.FFmpegPCMAudio(source=AudioSource, pipe=True)
-        Channal.play(AudioSource, bitrate=196, signal_type="music", fec=True, expected_packet_loss=0.15,
-                            after=lambda error: self.OnAudioEnd(GuildID))
+        try:
+            AudioSource = io.BytesIO(Buffer)
+            AudioSource = discord.FFmpegPCMAudio(source=AudioSource, pipe=True)
+            Channal.play(AudioSource, bitrate=196, signal_type="music", fec=True, expected_packet_loss=0.15,
+                                after=lambda error: self.OnAudioEnd(GuildID))
+        except:
+            pass
 
 
 
     async def Update(self):
-        for Key, Object in self.Guilds.items(): # this will update all the functions
-            await Object.Update()
+        try:
+            for Key, Object in self.Guilds.items(): # this will update all the functions
+                if not Object.Channal.is_connected():
+                    Object.IsPlaying = False
+                    Object.AudioPlaying = None
+                    Object.Channal = None
+                    Object.Queue = []
+
+                await Object.Update()
+        except:
+            pass
 
         # set the loop back
         await asyncio.sleep(1/ self.TickRate)

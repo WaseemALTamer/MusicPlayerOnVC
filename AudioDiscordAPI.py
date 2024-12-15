@@ -2,6 +2,7 @@ from discord.ext import commands
 from GuildPlayer import Player
 import discord.ext.commands
 import discord.ext
+import threading
 import discord
 import asyncio
 import random
@@ -116,6 +117,10 @@ class AudioAPI():
         Queue = self.Guilds[_guildID].Queue
         Message = "Queue" + "\n"
         for index, Object in enumerate(Queue):
+            if len(Message + Object.Name) >= 1800:
+                Message += "======================" + "\n"
+                Message += f"+{len(Queue) - index} More on Queue" + "\n"
+                break
             Message += "======================" + "\n"
             Message += f"{index}.{Object.Name}" + "\n"
         Message += "======================" + "\n"
@@ -167,7 +172,8 @@ class AudioAPI():
 
         self.Guilds[_discordServerID].Channal = interaction.guild.voice_client
         await interaction.response.send_message(f'imported the audio content')
-        self.Guilds[_discordServerID].AddToQueue(url) # adding the queue to the Guild Player
+        threading.Thread(target=self.Guilds[_discordServerID].AddToQueue, args=(url,)).start()
+        
 
         
 
@@ -190,7 +196,7 @@ class AudioAPI():
 
         self.Guilds[_discordServerID].Channal = interaction.guild.voice_client
         await interaction.response.send_message(f'imported the playList')
-        self.Guilds[_discordServerID].AddPlayList(url)
+        threading.Thread(target=self.Guilds[_discordServerID].AddPlayList, args=(url,)).start()
 
         
 

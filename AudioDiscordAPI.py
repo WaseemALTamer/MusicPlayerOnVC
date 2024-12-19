@@ -129,12 +129,21 @@ class AudioAPI():
             Message += f"Current Song Playing -> None" + "\n"
             
         for index, Object in enumerate(Queue):
-            if len(Message + Object.Name) >= 1800:
+            if Object.Name:
+                if len(Message + str(Object.Name)) >= 1800:
+                    Message += "======================" + "\n"
+                    Message += f"+{len(Queue) - (index + 1)} More on Queue" + "\n"
+                    break
                 Message += "======================" + "\n"
-                Message += f"+{len(Queue) - (index + 1)} More on Queue" + "\n"
-                break
-            Message += "======================" + "\n"
-            Message += f"{index + 1}. {Object.Name}" + "\n"
+                Message += f"{index + 1}. {Object.Name}" + "\n"
+            else:
+                if len(Message + str(Object.ID)) >= 1800:
+                    Message += "======================" + "\n"
+                    Message += f"+{len(Queue) - (index + 1)} More on Queue" + "\n"
+                    break
+                Message += "======================" + "\n"
+                Message += f"{index + 1}. <https://www.youtube.com/{Object.ID}>" + "\n"
+
         Message += "======================" + "\n"
         await interaction.response.send_message(Message)
 

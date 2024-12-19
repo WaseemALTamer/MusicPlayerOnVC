@@ -35,13 +35,17 @@ class Graper():
             if Title:
                 _video_title = Title
             else:
-                _yt = YouTube(URL)
-                _video_title = _yt.title
+                try:
+                    #_yt = YouTube(URL)
+                    #_video_title = _yt.title
+                    pass
+                except:
+                    pass
             _youtubeID = self.extract_youtube_video_id(URL)
             Container = self.AudioData[_youtubeID] = Audio()
             Container.ID = _youtubeID
             Container.Name = _video_title
-        except:
+        except Exception as e:
             pass
 
     #this function is slow esspically if there is more than 50 videos in one play list check the pytube.Playlist to know why

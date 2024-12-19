@@ -51,23 +51,20 @@ class Player():
 
 
 
-    def AddToQueue(self, YoutubeID):
-        _id = self.AudioGraper.extract_youtube_video_id(YoutubeID)
-
+    def AddToQueue(self, ID, Title=None):
+        _id = self.AudioGraper.extract_youtube_video_id(ID)
         try:
             self.AudioData[_id]
         except:
-            self.AudioGraper.Preparing(_id)
+            self.AudioGraper.Preparing(_id, Title=Title)
             
         self.Queue.append(self.AudioData[_id])
 
 
     def AddPlayList(self, YoutubePLID):
-        _ids = self.AudioGraper.PlaylistHerfsRequest(YoutubePLID)
-        for Index, _id in enumerate(_ids):
-            self.AddToQueue(_id)
-            if Index >= 100:
-                return
+        _ids_titles = self.AudioGraper.PlaylistHerfsRequest(YoutubePLID)
+        for _id, _title in _ids_titles:
+            self.AddToQueue(_id, Title=_title)
 
 
     async def Update(self):

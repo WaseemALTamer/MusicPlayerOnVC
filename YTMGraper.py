@@ -30,10 +30,13 @@ class Graper():
 
 
 
-    def Preparing(self, URL):
+    def Preparing(self, URL, Title=None):
         try:
-            _yt = YouTube(URL)
-            _video_title = _yt.title
+            if Title:
+                _video_title = Title
+            else:
+                _yt = YouTube(URL)
+                _video_title = _yt.title
             _youtubeID = self.extract_youtube_video_id(URL)
             Container = self.AudioData[_youtubeID] = Audio()
             Container.ID = _youtubeID
@@ -44,8 +47,8 @@ class Graper():
     #this function is slow esspically if there is more than 50 videos in one play list check the pytube.Playlist to know why
     def PlaylistHerfsRequest(self, playlist_url):
         playlist = Playlist(playlist_url)
-        video_urls = [video.watch_url for video in playlist.videos]
-        return video_urls
+        url_title_pairs = [[video.watch_url, None] for video in playlist.videos]
+        return url_title_pairs
         
 
     def Donwload(self, YoutubeID):

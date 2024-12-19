@@ -55,25 +55,29 @@ class AudioAPI():
         async def disconnect(interaction: discord.Interaction):
             await self.OnDisconnect(interaction)
 
-        @self.Bot.tree.command(name="pause", description="Restart the bot")
+        @self.Bot.tree.command(name="pause", description="Pause the music that is playing")
         async def pause(interaction: discord.Interaction):
             await self.On_Pause(interaction)
 
-        @self.Bot.tree.command(name="resume", description="Restart the bot")
+        @self.Bot.tree.command(name="resume", description="Resume the music that is playing")
         async def resume(interaction: discord.Interaction):
             await self.On_Resume(interaction)
 
-        @self.Bot.tree.command(name="show_queue", description="Restart the bot")
+        @self.Bot.tree.command(name="show_queue", description="Shows the queue")
         async def show_queue(interaction: discord.Interaction):
             await self.On_Show_Queue(interaction)
 
-        @self.Bot.tree.command(name="clear_queue", description="Restart the bot")
+        @self.Bot.tree.command(name="clear_queue", description="Clear the current queue")
         async def clear_queue(interaction: discord.Interaction):
             await self.On_Clear_Queue(interaction)
 
-        @self.Bot.tree.command(name="shuffle_queue", description="Restart the bot")
+        @self.Bot.tree.command(name="shuffle_queue", description="Shuffle the content of the queue")
         async def shuffle_queue(interaction: discord.Interaction):
             await self.On_Shuffle_Queue(interaction)
+
+        @self.Bot.tree.command(name="currently_playing", description="Show current song playing")
+        async def currently_playing(interaction: discord.Interaction):
+            await self.On_Currently_Playing(interaction)
 
         @self.Bot.event
         async def on_ready():
@@ -115,15 +119,37 @@ class AudioAPI():
 
         _guildID = interaction.user.guild.id
         Queue = self.Guilds[_guildID].Queue
+        SongPlaying = self.Guilds[_guildID].AudioPlaying
+
         Message = "Queue" + "\n"
+        Message += "======================" + "\n"
+        if SongPlaying:
+            Message += f"Current Song Playing -> {SongPlaying.Name}" + "\n"
+        else:
+            Message += f"Current Song Playing -> None" + "\n"
+            
         for index, Object in enumerate(Queue):
             if len(Message + Object.Name) >= 1800:
                 Message += "======================" + "\n"
-                Message += f"+{len(Queue) - index} More on Queue" + "\n"
+                Message += f"+{len(Queue) - (index + 1)} More on Queue" + "\n"
                 break
             Message += "======================" + "\n"
-            Message += f"{index}.{Object.Name}" + "\n"
+            Message += f"{index + 1}. {Object.Name}" + "\n"
         Message += "======================" + "\n"
+        await interaction.response.send_message(Message)
+
+
+    async def On_Currently_Playing(self, interaction):
+        _discordServerID = interaction.user.guild.id
+        self.InitNewGuild(_discordServerID)
+
+        _guildID = interaction.user.guild.id
+        SongPlaying = self.Guilds[_guildID].AudioPlaying
+        Message = "No song is playing currently"
+        if SongPlaying:
+            Message = f"{SongPlaying.Name}" + "\n"
+            Message += f"https://www.youtube.com/{SongPlaying.ID}"
+
         await interaction.response.send_message(Message)
 
 
@@ -173,9 +199,7 @@ class AudioAPI():
         self.Guilds[_discordServerID].Channal = interaction.guild.voice_client
         await interaction.response.send_message(f'imported the audio content')
         threading.Thread(target=self.Guilds[_discordServerID].AddToQueue, args=(url,)).start()
-        
 
-        
 
 
     async def On_PlayList(self, interaction, url):

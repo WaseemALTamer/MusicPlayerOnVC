@@ -259,7 +259,7 @@ class AudioAPI():
             Message += f"Current Song Playing -> None" + "\n"
             
         for index, Object in enumerate(Queue):
-            if Object.Name:
+            if Object.Name != VideoStatus.UNKNOWN_TITLE:
                 if len(Message + str(Object.Name)) >= 1800:
                     Message += "======================" + "\n"
                     Message += f"+{len(Queue) - (index + 1)} More on Queue" + "\n"

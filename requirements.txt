@@ -1,8 +1,6 @@
-discord.py
 nextcord
 pytube
 yt_dlp
-ffmpeg
 PyNacl
 discord-ext-bot
-subprocess
+discord.py

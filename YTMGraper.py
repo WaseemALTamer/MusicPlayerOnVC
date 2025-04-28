@@ -5,6 +5,7 @@
 
 from urllib.parse import urlparse, parse_qs
 from pytube import YouTube, Playlist
+from Constants import VideoStatus
 import subprocess
 
 
@@ -16,15 +17,15 @@ class Audio:
         self.Name = None
         self.Buffer = None
         self.Format = None
-        self.Status = "NotInstalled"
+        self.Status = VideoStatus.NOT_INSTALLED
 
 
 
-class Graper():
+class Graper:
     def __init__(self):
 
 
-        self.AudioData ={ # This Hashmap should be passed from its parant class to this 
+        self.AudioData = { # This Hashmap should be passed from its parant class to this 
             # "<YoutubeID>" : Aduio() 
         }
 
@@ -35,7 +36,10 @@ class Graper():
             if Title:
                 _video_title = Title
             else:
+                _video_title = VideoStatus.UNKNOWN_TITLE
                 try:
+                    # This section needs fix where it gets the video name for you "efficinatly"
+
                     #_yt = YouTube(URL)
                     #_video_title = _yt.title
                     pass
@@ -46,7 +50,7 @@ class Graper():
             Container.ID = _youtubeID
             Container.Name = _video_title
         except Exception as e:
-            pass
+            print(e)
 
     #this function is slow esspically if there is more than 50 videos in one play list check the pytube.Playlist to know why
     def PlaylistHerfsRequest(self, playlist_url):
@@ -62,7 +66,7 @@ class Graper():
 
         #_youtubeID = self.extract_youtube_video_id(URL)
         Container = self.AudioData[YoutubeID]
-        Container.Status = "Preparing"
+        Container.Status = VideoStatus.PREPARING
 
         Command = [
                     'yt-dlp',
@@ -79,10 +83,10 @@ class Graper():
 
         if not ErrorCode:
             Container.Buffer = Buffer
-            Container.Status = "Ready"
+            Container.Status = VideoStatus.READY
             return Buffer
         else:
-            Container.Status = "Error"
+            Container.Status = VideoStatus.ERROR
 
 
 
@@ -126,12 +130,15 @@ class Graper():
 
 
 if __name__ == "__main__":
-    url = "https://www.youtube.com/watch?v=gtfReGLyM_4"
+    url = "watch?v=fWNaR-rxAic"
     x = Graper()
     import time
     EllipsisTime = time.time()
+    x.Preparing(url)
     y = x.Donwload(url)
     print(f"Time Taken to download: {time.time() - EllipsisTime}")
     y = x.Convert(y)
     print(f"Time Taken to Convert: {time.time() - EllipsisTime}")
     print(len(y))
+    x.SaveMusic(y,"hello.mp4")
+    print(f"Time Taken to Convert: {time.time() - EllipsisTime}")

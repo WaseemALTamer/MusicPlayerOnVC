@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # This linux
 
 # Activate the virtual environment

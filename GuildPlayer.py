@@ -7,6 +7,7 @@
 from Constants import VideoStatus
 from YTMGraper import Graper
 import threading
+import random
 
 
 
@@ -18,6 +19,7 @@ class Audio:
         self.Buffer = None
         self.Format = None
         self.Status = VideoStatus.NOT_INSTALLED
+        self.m3u8Playlist = None
 
 
 
@@ -47,47 +49,25 @@ class Player():
 
 
         # API Functions
-        self.PlayFunction = None
+        self.PlayBufferFunction = None
+        self.PlayMEU8Function = None
+
         self.StopFunction = None # not implemented and for the discord api it wont be
         self.SeekFunction = None # still need to be implemented
 
 
 
 
-    def SetQueueLoopBack(self, state):
-        if state == True:
-            self.QueueLoopBack = state
-        elif not state == False:
-            self.QueueLoopBack = state
-        else:
-            self.QueueLoopBack = not self.QueueLoopBack
+    def ClearQueue(self):
+        self.Queue = []
 
-        if self.QueueLoopBack and self.AudioPlaying and (not self.Queue or (self.Queue and self.Queue[0] != self.AudioPlaying)):
-            self.Queue.append(self.AudioPlaying)
-         
-        
+    def ShuffleQueue(self):
+        random.shuffle(self.Queue)
 
-
-    def SetAudioLoopBack(self, state):
-        if state == True:
-            self.AudioLoopBack = state
-        elif not state == False:
-            self.AudioLoopBack = state
-        else:
-            self.AudioLoopBack = not self.AudioLoopBack
-
-        if self.AudioLoopBack and self.AudioPlaying and (not self.Queue or (self.Queue and self.Queue[0] != self.AudioPlaying)):
-            self.Queue.insert(0, self.AudioPlaying)
-
-        if not self.AudioLoopBack and self.Queue and self.Queue[0] == self.AudioPlaying:
-            self.Queue.pop(0)
-            
-            
 
 
 
     def AddToQueue(self, ID, Title=None, Index=None):
-
         _id = self.AudioGraper.extract_youtube_video_id(ID)
         try:
             self.AudioData[_id]
@@ -104,6 +84,33 @@ class Player():
         _ids_titles = self.AudioGraper.PlaylistHerfsRequest(YoutubePLID)
         for _id, _title in _ids_titles:
             self.AddToQueue(_id, Title=_title)
+
+
+    def SetQueueLoopBack(self, state):
+        if state == True:
+            self.QueueLoopBack = state
+        elif not state == False:
+            self.QueueLoopBack = state
+        else:
+            self.QueueLoopBack = not self.QueueLoopBack
+
+        if self.QueueLoopBack and self.AudioPlaying and (not self.Queue or (self.Queue and self.Queue[0] != self.AudioPlaying)):
+            self.Queue.append(self.AudioPlaying)
+         
+
+    def SetAudioLoopBack(self, state):
+        if state == True:
+            self.AudioLoopBack = state
+        elif not state == False:
+            self.AudioLoopBack = state
+        else:
+            self.AudioLoopBack = not self.AudioLoopBack
+
+        if self.AudioLoopBack and self.AudioPlaying and (not self.Queue or (self.Queue and self.Queue[0] != self.AudioPlaying)):
+            self.Queue.insert(0, self.AudioPlaying)
+
+        if not self.AudioLoopBack and self.Queue and self.Queue[0] == self.AudioPlaying:
+            self.Queue.pop(0)
 
 
     # this update function should be ran in a loop
@@ -136,14 +143,24 @@ class Player():
                     if self.AudioPlaying.Status == VideoStatus.PREPARING:
                         return
 
+
+                    # this if statment will be used if you have the video in buffer
                     if self.AudioPlaying.Status == VideoStatus.READY:
                         if self.Channal and not self.IsPlaying:
-                            await self.PlayFunction(self.AudioPlaying.Buffer, self.Channal, self.GuildID)
                             self.IsPlaying = True
+                            await self.PlayBufferFunction(self.AudioPlaying.Buffer, self.Channal, self.GuildID)
+                            
+
+                    if self.AudioPlaying.Status == VideoStatus.HAS_MEU8_URL:
+                        if self.Channal and not self.IsPlaying:
+                            self.IsPlaying = True
+                            await self.PlayMEU8Function(self.AudioPlaying.m3u8Playlist, self.Channal, self.GuildID)
+                            
+
 
                     if self.AudioPlaying.Status == VideoStatus.NOT_INSTALLED:
                         #self.AudioPlaying.Status = "Preparing" # change the varable just in case so we dont run through errors
-                        threading.Thread(target=self.AudioGraper.Donwload, args=(self.AudioPlaying.ID,)).start()
+                        threading.Thread(target=self.AudioGraper.Grap_m3u8_And_Title, args=(self.AudioPlaying.ID,)).start()
 
 
                     if self.AudioPlaying.Status == VideoStatus.ERROR:

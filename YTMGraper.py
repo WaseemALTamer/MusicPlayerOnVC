@@ -7,7 +7,7 @@ from urllib.parse import urlparse, parse_qs
 from pytube import YouTube, Playlist
 from Constants import VideoStatus
 import subprocess
-
+import yt_dlp
 
 
 # Structure
@@ -18,6 +18,7 @@ class Audio:
         self.Buffer = None
         self.Format = None
         self.Status = VideoStatus.NOT_INSTALLED
+        self.m3u8Playlist = None
 
 
 
@@ -89,6 +90,38 @@ class Graper:
             Container.Status = VideoStatus.ERROR
 
 
+    def Grap_m3u8_And_Title(self, YoutubeID):
+
+
+        Container = self.AudioData[YoutubeID]
+        Container.Status = VideoStatus.PREPARING
+
+        ydl_opts = {
+            'quiet': True,
+            'skip_download': True,
+            'no_warnings': True
+        }
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"https://www.youtube.com/{YoutubeID}", download=False)
+                title = info.get('title')
+
+                # Filter audio-only formats that use m3u8
+                m3u8_audio_url = None
+                for fmt in info.get('formats', []):
+                    if (
+                        fmt.get('protocol') in ['m3u8', 'm3u8_native']
+                        and fmt.get('vcodec') == 'none'  # means audio-only
+                    ):
+                        m3u8_audio_url = fmt.get('url')
+                        break
+
+                Container.Name, Container.m3u8Playlist = title, m3u8_audio_url
+                Container.Status = VideoStatus.HAS_MEU8_URL
+        except:
+            Container.Status = VideoStatus.ERROR
+
+            
 
     def Convert(self, Data, Container="wav"):
         Command = [

@@ -145,7 +145,10 @@ class AudioAPI():
 
     async def On_Skip(self, interaction):
         Channal = interaction.guild.voice_client
-        Channal.stop()
+        try:
+            Channal.stop()
+        except:
+            pass
         await interaction.response.send_message(f'Skiped')
 
 
@@ -153,7 +156,10 @@ class AudioAPI():
         Channal = interaction.guild.voice_client
         _guildID = interaction.user.guild.id
         Queue = self.Guilds[_guildID].Queue
-        Channal.stop()
+        try:
+            Channal.stop()
+        except:
+            pass
         for i in range(Num):
             Queue.pop(0)
         await interaction.response.send_message(f'Skiped curernt song and the next {Num} songs')
@@ -308,7 +314,7 @@ class AudioAPI():
         _discordServerID = interaction.user.guild.id
         self.InitNewGuild(_discordServerID)
         _guildID = interaction.user.guild.id
-        self.Guilds[_guildID].Queue = []
+        self.Guilds[_guildID].ClearQueue()
         await interaction.response.send_message(f'Cleared the Queue')
 
     async def On_Shuffle_Queue(self, interaction):
@@ -316,7 +322,7 @@ class AudioAPI():
         self.InitNewGuild(_discordServerID)
 
         _guildID = interaction.user.guild.id
-        random.shuffle(self.Guilds[_guildID].Queue)
+        self.Guilds[_guildID].ShuffleQueue()
         await interaction.response.send_message(f'Shuffled the Queue')
 
 
@@ -403,15 +409,29 @@ class AudioAPI():
 
         
 
-
-    async def PlaySound(self, Buffer, Channal, GuildID):
+    # this take a buffer
+    async def PlaySoundBuffer(self, Buffer, Channal, GuildID):
         try:
             AudioSource = io.BytesIO(Buffer)
             AudioSource = discord.FFmpegPCMAudio(source=AudioSource, pipe=True)
             Channal.play(AudioSource, bitrate=196, signal_type="music", fec=True, expected_packet_loss=0.15,
                                 after=lambda error: self.OnAudioEnd(GuildID))
-        except:
-            pass
+        except Exception as e:
+            self.OnAudioEnd(GuildID)
+            print(f"Failed to play stream: {e}")
+
+    # this takes an m3u8 stream URL
+    async def PlaySoundM3U8(self, m3u8_Path, Channal, GuildID):
+
+        try:
+            AudioSource = discord.FFmpegPCMAudio(source=m3u8_Path, options='-vn')
+            Channal.play(AudioSource, bitrate=196, signal_type="music", fec=True, expected_packet_loss=0.15,
+                after=lambda error: self.OnAudioEnd(GuildID))
+        except Exception as e:
+            self.OnAudioEnd(GuildID)
+            print(f"Failed to play stream: {e}")
+    
+    
 
 
 
@@ -445,5 +465,6 @@ class AudioAPI():
             self.Guilds[GuildID]
         except:
             Component = self.Guilds[GuildID] = Player()
-            Component.PlayFunction = self.PlaySound
+            Component.PlayBufferFunction = self.PlaySoundBuffer
+            Component.PlayMEU8Function = self.PlaySoundM3U8
             Component.GuildID = GuildID

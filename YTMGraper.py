@@ -4,7 +4,6 @@
 
 
 from urllib.parse import urlparse, parse_qs
-from pytube import YouTube, Playlist
 from Constants import VideoStatus
 import subprocess
 import yt_dlp
@@ -55,10 +54,37 @@ class Graper:
 
     #this function is slow esspically if there is more than 50 videos in one play list check the pytube.Playlist to know why
     def PlaylistHerfsRequest(self, playlist_url):
-        playlist = Playlist(playlist_url)
-        url_title_pairs = [[video.watch_url, None] for video in playlist.videos]
-        return url_title_pairs
+        ydl_opts = {
+            'ignoreerrors': True,
+            'quiet': True,
+            'extract_flat': True,
+        }
+        _id = self.extract_playlist_id(playlist_url)
+        canonical_url = f"https://www.youtube.com/playlist?list={_id}"
         
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(canonical_url, download=False)
+            if info is None:
+                return
+            
+            videos_info = []
+            entries = info.get('entries')
+            if not entries:
+                raise ValueError("No videos found in the playlist or playlist is private/unavailable.")
+            
+            for entry in entries:
+                if entry is None:
+                    continue
+                title = entry.get('title')
+                video_id = entry.get('id')
+                if not title or not video_id:
+                    continue
+                url = f"https://www.youtube.com/watch?v={video_id}"
+                videos_info.append([url, title])
+        
+        return videos_info
+
+            
 
     def Donwload(self, YoutubeID):
 
@@ -158,6 +184,12 @@ class Graper:
         except Exception as e:
             print(f"An error occurred: {e}")
             return ''
+        
+    def extract_playlist_id(self, youtube_url):
+        parsed_url = urlparse(youtube_url)
+        query_params = parse_qs(parsed_url.query)
+        return query_params.get('list', [None])[0]
+
 
 
 

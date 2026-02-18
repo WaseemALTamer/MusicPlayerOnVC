@@ -117,7 +117,9 @@ class Graper:
 
 
     def Grap_m3u8_And_Title(self, YoutubeID):
+        # this function doesnt work any more it will rout back to GrapStream url
 
+        return self.GrapStreamURL(YoutubeID)
 
         Container = self.AudioData[YoutubeID]
         Container.Status = VideoStatus.PREPARING
@@ -146,6 +148,27 @@ class Graper:
                 Container.Status = VideoStatus.HAS_MEU8_URL
         except:
             Container.Status = VideoStatus.ERROR
+
+
+    def GrapStreamURL(self, YoutubeID):
+
+        Container = self.AudioData[YoutubeID]
+        Container.Status = VideoStatus.PREPARING
+
+        ydl_opts = {
+            'quiet': True,
+            'skip_download': True,
+            'no_warnings': True,
+            'format': 'bestaudio[protocol=m3u8]/bestaudio'
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"https://www.youtube.com/{YoutubeID}", download=False)
+            title = info.get('title')
+            url = info.get('url')  # This gives direct stream URL
+
+            Container.Name, Container.m3u8Playlist = title, url # we assume it to be a playlist url this needs to be changed
+            Container.Status = VideoStatus.HAS_MEU8_URL
 
             
 
